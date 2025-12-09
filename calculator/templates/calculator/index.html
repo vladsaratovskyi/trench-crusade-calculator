@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Trench Calc</title>
+    <style>
+        :root {
+            --bg: #0b1221;
+            --panel: #0f1b2d;
+            --panel-2: #121d33;
+            --accent: #f97316;
+            --accent-2: #22d3ee;
+            --text: #e5e7eb;
+            --muted: #9ca3af;
+            --border: rgba(255, 255, 255, 0.08);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: "DM Sans", "Avenir Next", "Segoe UI", sans-serif;
+            background: radial-gradient(circle at 15% 20%, #1f2a44 0, transparent 25%),
+                        radial-gradient(circle at 85% 15%, #12303f 0, transparent 30%),
+                        radial-gradient(circle at 60% 80%, #16213a 0, transparent 35%),
+                        var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        .page {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 32px 20px 48px;
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .title {
+            display: flex;
+            align-items: baseline;
+            gap: 12px;
+        }
+
+        .title h1 {
+            margin: 0;
+            font-size: 28px;
+            letter-spacing: 0.4px;
+        }
+
+        .pill {
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: linear-gradient(120deg, rgba(249, 115, 22, 0.9), rgba(34, 211, 238, 0.85));
+            color: #0b0f1a;
+            font-weight: 700;
+            font-size: 12px;
+            letter-spacing: 0.4px;
+            text-transform: uppercase;
+        }
+
+        p.lead {
+            margin: 8px 0 0;
+            color: var(--muted);
+            max-width: 720px;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 1fr 0.95fr;
+            gap: 16px;
+        }
+
+        .card {
+            background: linear-gradient(180deg, var(--panel), var(--panel-2));
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 18px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+        }
+
+        form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 14px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            color: var(--muted);
+            margin-bottom: 6px;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 11px 12px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.02);
+            color: var(--text);
+            font-size: 15px;
+        }
+
+        input[type="checkbox"] {
+            transform: scale(1.1);
+            margin-right: 10px;
+            accent-color: var(--accent);
+        }
+
+        .checkbox-row {
+            display: flex;
+            align-items: center;
+            padding: 11px 12px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .actions {
+            grid-column: 1 / -1;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            margin-top: 4px;
+        }
+
+        button {
+            background: linear-gradient(120deg, var(--accent), #ffae3d);
+            color: #0b0f1a;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 15px;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(249, 115, 22, 0.35);
+        }
+
+        button:hover {
+            transform: translateY(-1px);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .stat {
+            padding: 14px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .stat small {
+            color: var(--muted);
+            letter-spacing: 0.4px;
+        }
+
+        .stat .value {
+            font-size: 30px;
+            font-weight: 800;
+            margin-top: 6px;
+        }
+
+        .band {
+            margin-bottom: 12px;
+        }
+
+        .band-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--muted);
+            font-size: 14px;
+            margin-bottom: 6px;
+        }
+
+        .bar {
+            position: relative;
+            width: 100%;
+            height: 12px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.04);
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .bar span {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(120deg, var(--accent-2), var(--accent));
+            width: 0;
+            transition: width 0.25s ease;
+        }
+
+        .errorlist {
+            list-style: none;
+            margin: 6px 0 0;
+            padding: 0;
+            color: #fca5a5;
+            font-size: 13px;
+        }
+
+        .alert {
+            margin-bottom: 12px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            border: 1px solid rgba(249, 115, 22, 0.4);
+            background: rgba(249, 115, 22, 0.08);
+            color: #ffd7ba;
+        }
+
+        @media (max-width: 860px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <header>
+            <div class="title">
+                <h1>Trench Calculator</h1>
+                <span class="pill">2d6 + keep 2</span>
+            </div>
+            <p class="lead">
+                Adjust hit and injury parameters, then run the roll math. Defaults match the values you shared.
+            </p>
+        </header>
+
+        <div class="layout">
+            <div class="card">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    {% if form.errors %}
+                        <div class="alert">Please fix the highlighted fields.</div>
+                    {% endif %}
+                    <div>
+                        <label for="{{ form.hit_target_number.id_for_label }}">{{ form.hit_target_number.label }}</label>
+                        {{ form.hit_target_number }}
+                        {{ form.hit_target_number.errors }}
+                    </div>
+                    <div>
+                        <label for="{{ form.hit_dice_mod.id_for_label }}">{{ form.hit_dice_mod.label }}</label>
+                        {{ form.hit_dice_mod }}
+                        {{ form.hit_dice_mod.errors }}
+                    </div>
+                    <div>
+                        <label for="{{ form.hit_roll_mod.id_for_label }}">{{ form.hit_roll_mod.label }}</label>
+                        {{ form.hit_roll_mod }}
+                        {{ form.hit_roll_mod.errors }}
+                    </div>
+                    <div>
+                        <label for="{{ form.injury_dice_mod.id_for_label }}">{{ form.injury_dice_mod.label }}</label>
+                        {{ form.injury_dice_mod }}
+                        {{ form.injury_dice_mod.errors }}
+                    </div>
+                    <div>
+                        <label for="{{ form.injury_roll_mod.id_for_label }}">{{ form.injury_roll_mod.label }}</label>
+                        {{ form.injury_roll_mod }}
+                        {{ form.injury_roll_mod.errors }}
+                    </div>
+                    <div>
+                        <label for="{{ form.target_armor.id_for_label }}">{{ form.target_armor.label }}</label>
+                        {{ form.target_armor }}
+                        {{ form.target_armor.errors }}
+                    </div>
+                    <div class="checkbox-row">
+                        {{ form.weapon_is_critical }}<label for="{{ form.weapon_is_critical.id_for_label }}">{{ form.weapon_is_critical.label }}</label>
+                        {{ form.weapon_is_critical.errors }}
+                    </div>
+                    <div class="actions">
+                        <button type="submit">Recalculate</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="card">
+                {% if results %}
+                    <div class="stats-grid">
+                        <div class="stat">
+                            <small>Hit chance</small>
+                            <div class="value">{{ results.hit_probability }}</div>
+                        </div>
+                        <div class="stat">
+                            <small>Miss chance</small>
+                            <div class="value">{{ results.miss_probability }}</div>
+                        </div>
+                        <div class="stat">
+                            <small>Any injury</small>
+                            <div class="value">{{ results.any_injury_probability }}</div>
+                        </div>
+                    </div>
+
+                    <div>
+                        {% for band in results.bands %}
+                            <div class="band">
+                                <div class="band-title">
+                                    <span>{{ band.label }}</span>
+                                    <strong>{{ band.percent }}</strong>
+                                </div>
+                                <div class="bar">
+                                    <span style="width: {{ band.percent }};"></span>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <p class="lead" style="margin-top: 6px;">
+                        Injury bands use the default steps: 2-6 Flesh Wound, 7-8 Down, 9+ Out of Action.
+                    </p>
+                {% else %}
+                    <p class="lead">Submit the form to see probabilities.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>

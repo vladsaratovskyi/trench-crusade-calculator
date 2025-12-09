@@ -1,19 +1,35 @@
-#!/usr/bin/env python3
 from __future__ import annotations
-from itertools import product
+
 from collections import Counter
 from dataclasses import dataclass
+from itertools import product
 from typing import Dict, List, Optional, Tuple
 
-SUCCESS_RESULT = 7
 KEEP_DICES = 2
-BASE_DICES = 2
 DICE_SIDES = 6
 CRIT_RESULT = 12
 
-# ===============================
-# Core dice probability engine
-# ===============================
+
+@dataclass(frozen=True)
+class InjuryBand:
+    min_value: int
+    max_value: Optional[int]  # None means "no upper limit"
+    label: str
+
+    def matches(self, value: int) -> bool:
+        if value < self.min_value:
+            return False
+        if self.max_value is None:
+            return True
+        return value <= self.max_value
+
+
+DEFAULT_INJURY_BANDS: List[InjuryBand] = [
+    InjuryBand(2, 6, "Flesh Wound"),
+    InjuryBand(7, 8, "Down"),
+    InjuryBand(9, None, "Out of Action"),
+]
+
 
 def dice_sum_distribution(
     num_dice: int,
@@ -38,7 +54,7 @@ def success_probability(
     dice_mod: int = 0,
     roll_mod: int = 0,
 ) -> float:
-    dices_rolled = BASE_DICES + abs(dice_mod)
+    dices_rolled = KEEP_DICES + abs(dice_mod)
     keep_highest = dice_mod >= 0
 
     dist = dice_sum_distribution(dices_rolled, keep_highest=keep_highest)
@@ -49,31 +65,6 @@ def success_probability(
             prob += p
 
     return prob
-
-
-# ===============================
-# Injury system
-# ===============================
-@dataclass(frozen=True)
-class InjuryBand:
-    """
-    One row of the Injury table.
-    Example (placeholder):
-        2-6  -> "Flesh Wound"
-        7-8  -> "Down"
-        9-10 -> "Out of Action"
-        11+  -> "Dead"
-    """
-    min_value: int
-    max_value: Optional[int]  # None means "no upper limit"
-    label: str
-
-    def matches(self, value: int) -> bool:
-        if value < self.min_value:
-            return False
-        if self.max_value is None:
-            return True
-        return value <= self.max_value
 
 
 def injury_distribution(
@@ -99,10 +90,6 @@ def injury_distribution(
     return result
 
 
-# ===============================
-# Full attack (Hit + Crit + Injury)
-# ===============================
-
 @dataclass
 class AttackInput:
     # Hit (Success) roll
@@ -114,7 +101,7 @@ class AttackInput:
     weapon_is_critical: bool = False # if True, crit = +2d Injury instead of +1d
 
     # Injury roll
-    injury_bands: List[InjuryBand] = None
+    injury_bands: List[InjuryBand] | None = None
     injury_dice_mod: int = 0         # base +/- dice on Injury (before crit bonus)
     injury_roll_mod: int = 0         # flat modifier to Injury sum
     target_armor: int = 0            # armor to subtract from Injury
@@ -146,9 +133,9 @@ def hit_branches(
 def attack_outcome_probabilities(attack: AttackInput) -> Dict[str, float]:
     attack.validate()
 
-    labels = {band.label for band in attack.injury_bands}
-    result: Dict[str, float] = {label: 0.0 for label in labels}
-    result["Miss"] = 0.0
+    result: Dict[str, float] = {"Miss": 0.0}
+    for band in attack.injury_bands:
+        result.setdefault(band.label, 0.0)
 
     branches = hit_branches(attack.hit_dice_mod)
 
@@ -181,10 +168,6 @@ def attack_outcome_probabilities(attack: AttackInput) -> Dict[str, float]:
     return result
 
 
-# ===============================
-# Demo / comparison helpers
-# ===============================
-
 def format_percent(p: float) -> str:
     return f"{p*100:5.2f}%"
 
@@ -193,7 +176,6 @@ def print_summary(name: str, outcome: Dict[str, float]):
     miss = outcome.get("Miss", 0.0)
     any_injury = 1.0 - miss
 
-    # Adjust these labels to your real Injury table naming
     down = outcome.get("Down", 0.0)
     ooa = outcome.get("Out of Action", 0.0)
 
@@ -205,50 +187,3 @@ def print_summary(name: str, outcome: Dict[str, float]):
     print(f"  Down : {format_percent(down)}")
     print(f"  OOA : {format_percent(ooa)}")
     print()
-
-
-def demo():
-    print("=== Hit chance with +/- dice (2d6 system) ===\n")
-    tn = 7
-    for dice_mod in (-2, -1, 0, +1, +2, +3):
-        p = success_probability(target_number=tn, dice_mod=dice_mod)
-        rolled = 2 + abs(dice_mod)
-        print(
-            f"TN {tn}+ with 2d6 {dice_mod:+d}d "
-            f"(roll {rolled}d6, keep {'lowest' if dice_mod<0 else 'highest'} 2): "
-            f"{format_percent(p)}"
-        )
-
-    print("\n---\n")
-
-    # Example Injury table (replace with your real Trench Crusade table)
-    example_injury_bands = [
-        InjuryBand(2, 6, "Flesh Wound"),
-        InjuryBand(7, 8, "Down"),
-        InjuryBand(9, None, "Out of Action"),
-    ]
-
-    # Example: normal weapon vs critical weapon, same hit & damage profile
-    common_args = dict(
-        hit_target_number=7,
-        hit_dice_mod=2,       # example: -1d (roll 3, keep 2 lowest for hit)
-        hit_roll_mod=0,
-
-        injury_bands=example_injury_bands,
-        injury_dice_mod=0,
-        injury_roll_mod=2,
-        target_armor=0,
-    )
-
-    atk_normal = AttackInput(weapon_is_critical=False, **common_args)
-    atk_crit   = AttackInput(weapon_is_critical=True,  **common_args)
-
-    out_normal = attack_outcome_probabilities(atk_normal)
-    out_crit   = attack_outcome_probabilities(atk_crit)
-
-    print_summary("Normal weapon (crit = +1d Injury)", out_normal)
-    print_summary("Critical weapon (crit = +2d Injury)", out_crit)
-
-
-if __name__ == "__main__":
-    demo()

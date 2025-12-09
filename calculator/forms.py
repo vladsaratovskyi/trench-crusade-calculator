@@ -1,6 +1,6 @@
 from django import forms
 
-from .models import UnitProfile
+from .models import Keyword, UnitProfile
 
 ATTACK_TYPE_CHOICES = (
     ("ranged", "Ranged"),
@@ -45,9 +45,17 @@ class AttackInputForm(forms.Form):
 
 
 class UnitProfileForm(forms.ModelForm):
+    keywords = forms.ModelMultipleChoiceField(
+        label="Keywords",
+        queryset=Keyword.objects.none(),
+        required=False,
+        help_text="Select any keywords that modify this profile.",
+        widget=forms.SelectMultiple(attrs={"size": 4}),
+    )
+
     class Meta:
         model = UnitProfile
-        fields = ["name", "ranged_dice_mod", "melee_dice_mod", "armor"]
+        fields = ["name", "ranged_dice_mod", "melee_dice_mod", "armor", "keywords"]
         labels = {
             "name": "Profile name",
             "ranged_dice_mod": "Ranged attack dice mod (+/-d6)",
@@ -58,3 +66,22 @@ class UnitProfileForm(forms.ModelForm):
     def clean_name(self):
         name = self.cleaned_data["name"].strip()
         return name
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["keywords"].queryset = Keyword.objects.all()
+
+
+class KeywordForm(forms.ModelForm):
+    class Meta:
+        model = Keyword
+        fields = ["name", "ranged_dice_mod", "melee_dice_mod", "armor_mod"]
+        labels = {
+            "name": "Keyword name",
+            "ranged_dice_mod": "Ranged dice mod (+/-d6)",
+            "melee_dice_mod": "Melee dice mod (+/-d6)",
+            "armor_mod": "Armor modifier",
+        }
+
+    def clean_name(self):
+        return self.cleaned_data["name"].strip()

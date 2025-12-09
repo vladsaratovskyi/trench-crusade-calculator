@@ -1,14 +1,36 @@
 from django.db import models
 
 
-class UnitProfile(models.Model):
+class Keyword(models.Model):
     name = models.CharField(max_length=100, unique=True)
     ranged_dice_mod = models.IntegerField(default=0, help_text="Dice modifier for ranged attacks (+/-d6).")
     melee_dice_mod = models.IntegerField(default=0, help_text="Dice modifier for melee attacks (+/-d6).")
-    armor = models.IntegerField(default=0, help_text="Armor value applied to injury rolls.")
+    armor_mod = models.IntegerField(default=0, help_text="Armor modifier applied to injury rolls.")
 
     class Meta:
         ordering = ["name"]
 
     def __str__(self) -> str:
         return self.name
+
+
+class UnitProfile(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    ranged_dice_mod = models.IntegerField(default=0, help_text="Dice modifier for ranged attacks (+/-d6).")
+    melee_dice_mod = models.IntegerField(default=0, help_text="Dice modifier for melee attacks (+/-d6).")
+    armor = models.IntegerField(default=0, help_text="Armor value applied to injury rolls.")
+    keywords = models.ManyToManyField(Keyword, blank=True, related_name="unit_profiles")
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self) -> str:
+        return self.name
+
+    def keyword_totals(self):
+        agg = {"ranged_dice_mod": 0, "melee_dice_mod": 0, "armor_mod": 0}
+        for kw in self.keywords.all():
+            agg["ranged_dice_mod"] += kw.ranged_dice_mod
+            agg["melee_dice_mod"] += kw.melee_dice_mod
+            agg["armor_mod"] += kw.armor_mod
+        return agg

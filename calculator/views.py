@@ -1,13 +1,13 @@
 from django.shortcuts import render
 
-from .forms import AttackInputForm, UnitProfileForm
+from .forms import AttackInputForm, KeywordForm, UnitProfileForm
 from .logic import (
     AttackInput,
     DEFAULT_INJURY_BANDS,
     attack_outcome_probabilities,
     success_probability,
 )
-from .models import UnitProfile
+from .models import Keyword, UnitProfile
 
 
 def _as_percent(value: float) -> str:
@@ -24,11 +24,21 @@ def _build_results(cleaned_data):
     defender = cleaned_data["defender_profile"]
     attack_type = cleaned_data["attack_type"]
 
+    atk_kw_totals = attacker.keyword_totals()
+    def_kw_totals = defender.keyword_totals()
+
     base_hit_dice_mod = (
         attacker.ranged_dice_mod if attack_type == "ranged" else attacker.melee_dice_mod
     )
-    hit_dice_mod = base_hit_dice_mod + cleaned_data["extra_hit_dice_mod"]
-    target_armor = defender.armor + cleaned_data["extra_target_armor"]
+    keyword_hit_mod = (
+        atk_kw_totals["ranged_dice_mod"] if attack_type == "ranged" else atk_kw_totals["melee_dice_mod"]
+    )
+
+    hit_dice_mod = base_hit_dice_mod + keyword_hit_mod + cleaned_data["extra_hit_dice_mod"]
+
+    base_armor = defender.armor
+    keyword_armor_mod = def_kw_totals["armor_mod"]
+    target_armor = base_armor + keyword_armor_mod + cleaned_data["extra_target_armor"]
 
     attack = AttackInput(
         hit_target_number=cleaned_data["hit_target_number"],
@@ -54,15 +64,19 @@ def _build_results(cleaned_data):
         "defender": defender,
         "attack_type": attack_type,
         "base_hit_dice_mod": base_hit_dice_mod,
+        "keyword_hit_mod": keyword_hit_mod,
         "hit_dice_mod": hit_dice_mod,
         "extra_hit_dice_mod": cleaned_data["extra_hit_dice_mod"],
         "hit_target_number": cleaned_data["hit_target_number"],
         "hit_roll_mod": cleaned_data["hit_roll_mod"],
-        "base_armor": defender.armor,
+        "base_armor": base_armor,
         "target_armor": target_armor,
         "extra_target_armor": cleaned_data["extra_target_armor"],
+        "keyword_armor_mod": keyword_armor_mod,
         "injury_dice_mod": cleaned_data["injury_dice_mod"],
         "injury_roll_mod": cleaned_data["injury_roll_mod"],
+        "attacker_keywords": list(attacker.keywords.all()),
+        "defender_keywords": list(defender.keywords.all()),
         "hit_probability": _as_percent(hit_prob),
         "miss_probability": _as_percent(outcome.get("Miss", 0.0)),
         "any_injury_probability": _as_percent(any_injury),
@@ -95,26 +109,38 @@ def _default_payload():
 def calculator_view(request):
     _ensure_profiles_exist()
     results = None
+    attack_form = AttackInputForm(request.POST or None, prefix="attack")
+    profile_form = UnitProfileForm(prefix="profile")
+    keyword_form = KeywordForm(prefix="keyword")
 
-    if request.method == "POST" and "create_profile" in request.POST:
-        profile_form = UnitProfileForm(request.POST, prefix="profile")
-        if profile_form.is_valid():
-            new_profile = profile_form.save()
-            profile_form = UnitProfileForm(prefix="profile")
-            attack_form = AttackInputForm(
-                prefix="attack",
-                initial={
-                    "attacker_profile": new_profile,
-                    "defender_profile": new_profile,
-                },
-            )
-        else:
+    if request.method == "POST":
+        if "create_profile" in request.POST:
+            profile_form = UnitProfileForm(request.POST, prefix="profile")
             attack_form = AttackInputForm(prefix="attack")
-    else:
-        attack_form = AttackInputForm(request.POST or None, prefix="attack")
-        profile_form = UnitProfileForm(prefix="profile")
-        if attack_form.is_bound and attack_form.is_valid():
-            results = _build_results(attack_form.cleaned_data)
+            if profile_form.is_valid():
+                new_profile = profile_form.save()
+                profile_form = UnitProfileForm(prefix="profile")
+                attack_form = AttackInputForm(
+                    prefix="attack",
+                    initial={
+                        "attacker_profile": new_profile,
+                        "defender_profile": new_profile,
+                    },
+                )
+        elif "create_keyword" in request.POST:
+            keyword_form = KeywordForm(request.POST, prefix="keyword")
+            attack_form = AttackInputForm(prefix="attack")
+            profile_form = UnitProfileForm(prefix="profile")
+            if keyword_form.is_valid():
+                keyword_form.save()
+                keyword_form = KeywordForm(prefix="keyword")
+                # Refresh profile form choices to include new keyword
+                profile_form = UnitProfileForm(prefix="profile")
+        else:
+            if attack_form.is_bound and attack_form.is_valid():
+                results = _build_results(attack_form.cleaned_data)
+            profile_form = UnitProfileForm(prefix="profile")
+            keyword_form = KeywordForm(prefix="keyword")
 
     if results is None:
         defaults = _default_payload()
@@ -131,5 +157,10 @@ def calculator_view(request):
     return render(
         request,
         "calculator/index.html",
-        {"attack_form": attack_form, "profile_form": profile_form, "results": results},
+        {
+            "attack_form": attack_form,
+            "profile_form": profile_form,
+            "keyword_form": keyword_form,
+            "results": results,
+        },
     )

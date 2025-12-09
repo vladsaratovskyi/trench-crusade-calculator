@@ -380,8 +380,46 @@
                             {{ profile_form.armor }}
                             {{ profile_form.armor.errors }}
                         </div>
+                        <div>
+                            <label for="{{ profile_form.keywords.id_for_label }}">{{ profile_form.keywords.label }}</label>
+                            {{ profile_form.keywords }}
+                            {{ profile_form.keywords.errors }}
+                        </div>
                         <div class="actions">
                             <button type="submit" name="create_profile" value="1">Add profile</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="card secondary">
+                    <p class="section-title">Add a keyword</p>
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        {% if keyword_form.errors %}
+                            <div class="alert">Please fix the highlighted keyword fields.</div>
+                        {% endif %}
+                        <div>
+                            <label for="{{ keyword_form.name.id_for_label }}">{{ keyword_form.name.label }}</label>
+                            {{ keyword_form.name }}
+                            {{ keyword_form.name.errors }}
+                        </div>
+                        <div>
+                            <label for="{{ keyword_form.ranged_dice_mod.id_for_label }}">{{ keyword_form.ranged_dice_mod.label }}</label>
+                            {{ keyword_form.ranged_dice_mod }}
+                            {{ keyword_form.ranged_dice_mod.errors }}
+                        </div>
+                        <div>
+                            <label for="{{ keyword_form.melee_dice_mod.id_for_label }}">{{ keyword_form.melee_dice_mod.label }}</label>
+                            {{ keyword_form.melee_dice_mod }}
+                            {{ keyword_form.melee_dice_mod.errors }}
+                        </div>
+                        <div>
+                            <label for="{{ keyword_form.armor_mod.id_for_label }}">{{ keyword_form.armor_mod.label }}</label>
+                            {{ keyword_form.armor_mod }}
+                            {{ keyword_form.armor_mod.errors }}
+                        </div>
+                        <div class="actions">
+                            <button type="submit" name="create_keyword" value="1">Add keyword</button>
                         </div>
                     </form>
                 </div>
@@ -407,11 +445,11 @@
                     <div class="chip-row">
                         <div class="chip">
                             <small>Hit dice mod</small>
-                            <strong>{{ results.base_hit_dice_mod }} base, {{ results.extra_hit_dice_mod }} extra = {{ results.hit_dice_mod }}</strong>
+                            <strong>{{ results.base_hit_dice_mod }} base, {{ results.keyword_hit_mod }} keywords, {{ results.extra_hit_dice_mod }} extra = {{ results.hit_dice_mod }}</strong>
                         </div>
                         <div class="chip">
                             <small>Armor applied</small>
-                            <strong>{{ results.base_armor }} base, {{ results.extra_target_armor }} extra = {{ results.target_armor }}</strong>
+                            <strong>{{ results.base_armor }} base, {{ results.keyword_armor_mod }} keywords, {{ results.extra_target_armor }} extra = {{ results.target_armor }}</strong>
                         </div>
                         <div class="chip">
                             <small>Hit TN / roll mod</small>
@@ -420,6 +458,28 @@
                         <div class="chip">
                             <small>Injury mods</small>
                             <strong>{{ results.injury_dice_mod }}d, {{ results.injury_roll_mod }} roll mod</strong>
+                        </div>
+                    </div>
+                    <div class="chip-row">
+                        <div class="chip">
+                            <small>Attacker keywords</small>
+                            <strong>
+                                {% if results.attacker_keywords %}
+                                    {{ results.attacker_keywords|join:", " }}
+                                {% else %}
+                                    None
+                                {% endif %}
+                            </strong>
+                        </div>
+                        <div class="chip">
+                            <small>Target keywords</small>
+                            <strong>
+                                {% if results.defender_keywords %}
+                                    {{ results.defender_keywords|join:", " }}
+                                {% else %}
+                                    None
+                                {% endif %}
+                            </strong>
                         </div>
                     </div>
 

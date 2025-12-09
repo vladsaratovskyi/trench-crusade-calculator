@@ -285,7 +285,7 @@
                 <span class="pill">2d6 + keep 2</span>
             </div>
             <p class="lead">
-                Pick attacker and target unit profiles, choose ranged or melee, then layer any situational modifiers to see hit and injury odds.
+                Pick attacker/target profiles, optionally pick a weapon (its keywords apply), then layer situational modifiers to see hit and injury odds.
             </p>
         </header>
 
@@ -309,8 +309,14 @@
                             {{ attack_form.defender_profile.errors }}
                         </div>
                         <div>
+                            <label for="{{ attack_form.weapon.id_for_label }}">{{ attack_form.weapon.label }}</label>
+                            {{ attack_form.weapon }}
+                            {{ attack_form.weapon.errors }}
+                        </div>
+                        <div>
                             <label for="{{ attack_form.attack_type.id_for_label }}">{{ attack_form.attack_type.label }}</label>
                             {{ attack_form.attack_type }}
+                            <small style="color: var(--muted); display:block; margin-top:4px;">If a weapon is chosen, its range type overrides this toggle.</small>
                             {{ attack_form.attack_type.errors }}
                         </div>
                         <div>
@@ -354,6 +360,44 @@
                 </div>
 
                 <div class="card secondary">
+                    <p class="section-title">Add a weapon</p>
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        {% if weapon_form.errors %}
+                            <div class="alert">Please fix the highlighted weapon fields.</div>
+                        {% endif %}
+                        <div>
+                            <label for="{{ weapon_form.name.id_for_label }}">{{ weapon_form.name.label }}</label>
+                            {{ weapon_form.name }}
+                            {{ weapon_form.name.errors }}
+                        </div>
+                        <div>
+                            <label for="{{ weapon_form.weapon_type.id_for_label }}">{{ weapon_form.weapon_type.label }}</label>
+                            {{ weapon_form.weapon_type }}
+                            {{ weapon_form.weapon_type.errors }}
+                        </div>
+                        <div>
+                            <label for="{{ weapon_form.range_type.id_for_label }}">{{ weapon_form.range_type.label }}</label>
+                            {{ weapon_form.range_type }}
+                            {{ weapon_form.range_type.errors }}
+                        </div>
+                        <div>
+                            <label for="{{ weapon_form.range_inches.id_for_label }}">{{ weapon_form.range_inches.label }}</label>
+                            {{ weapon_form.range_inches }}
+                            {{ weapon_form.range_inches.errors }}
+                        </div>
+                        <div>
+                            <label for="{{ weapon_form.keywords.id_for_label }}">{{ weapon_form.keywords.label }}</label>
+                            {{ weapon_form.keywords }}
+                            {{ weapon_form.keywords.errors }}
+                        </div>
+                        <div class="actions">
+                            <button type="submit" name="create_weapon" value="1">Add weapon</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="card secondary">
                     <p class="section-title">Add a unit profile</p>
                     <form method="post" novalidate>
                         {% csrf_token %}
@@ -384,6 +428,11 @@
                             <label for="{{ profile_form.keywords.id_for_label }}">{{ profile_form.keywords.label }}</label>
                             {{ profile_form.keywords }}
                             {{ profile_form.keywords.errors }}
+                        </div>
+                        <div>
+                            <label for="{{ profile_form.weapons.id_for_label }}">{{ profile_form.weapons.label }}</label>
+                            {{ profile_form.weapons }}
+                            {{ profile_form.weapons.errors }}
                         </div>
                         <div class="actions">
                             <button type="submit" name="create_profile" value="1">Add profile</button>
@@ -434,6 +483,26 @@
                             <strong>{{ results.attacker.name }}</strong>
                         </div>
                         <div class="chip">
+                            <small>Attacker weapons</small>
+                            <strong>
+                                {% if results.attacker_weapons %}
+                                    {{ results.attacker_weapons|join:", " }}
+                                {% else %}
+                                    None
+                                {% endif %}
+                            </strong>
+                        </div>
+                        <div class="chip">
+                            <small>Weapon</small>
+                            <strong>
+                                {% if results.weapon %}
+                                    {{ results.weapon.name }} ({{ results.weapon.weapon_type|capfirst }}, {{ results.weapon.range_type|capfirst }}{% if results.weapon.range_inches %} {{ results.weapon.range_inches }}\"{% endif %})
+                                {% else %}
+                                    None
+                                {% endif %}
+                            </strong>
+                        </div>
+                        <div class="chip">
                             <small>Target</small>
                             <strong>{{ results.defender.name }}</strong>
                         </div>
@@ -445,7 +514,7 @@
                     <div class="chip-row">
                         <div class="chip">
                             <small>Hit dice mod</small>
-                            <strong>{{ results.base_hit_dice_mod }} base, {{ results.keyword_hit_mod }} keywords, {{ results.extra_hit_dice_mod }} extra = {{ results.hit_dice_mod }}</strong>
+                            <strong>{{ results.base_hit_dice_mod }} base, {{ results.keyword_hit_mod }} unit keywords, {{ results.weapon_hit_mod }} weapon keywords, {{ results.extra_hit_dice_mod }} extra = {{ results.hit_dice_mod }}</strong>
                         </div>
                         <div class="chip">
                             <small>Armor applied</small>
@@ -466,6 +535,16 @@
                             <strong>
                                 {% if results.attacker_keywords %}
                                     {{ results.attacker_keywords|join:", " }}
+                                {% else %}
+                                    None
+                                {% endif %}
+                            </strong>
+                        </div>
+                        <div class="chip">
+                            <small>Weapon keywords</small>
+                            <strong>
+                                {% if results.weapon_keywords %}
+                                    {{ results.weapon_keywords|join:", " }}
                                 {% else %}
                                     None
                                 {% endif %}

@@ -1,603 +1,199 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Trench Calc</title>
-    <style>
-        :root {
-            --bg: #0b1221;
-            --panel: #0f1b2d;
-            --panel-2: #121d33;
-            --accent: #f97316;
-            --accent-2: #22d3ee;
-            --text: #e5e7eb;
-            --muted: #9ca3af;
-            --border: rgba(255, 255, 255, 0.08);
-        }
-
-        * { box-sizing: border-box; }
-
-        body {
-            margin: 0;
-            font-family: "DM Sans", "Avenir Next", "Segoe UI", sans-serif;
-            background: radial-gradient(circle at 15% 20%, #1f2a44 0, transparent 25%),
-                        radial-gradient(circle at 85% 15%, #12303f 0, transparent 30%),
-                        radial-gradient(circle at 60% 80%, #16213a 0, transparent 35%),
-                        var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-        }
-
-        .page {
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 32px 20px 48px;
-        }
-
-        header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 16px;
-            margin-bottom: 20px;
-        }
-
-        .title {
-            display: flex;
-            align-items: baseline;
-            gap: 12px;
-        }
-
-        .title h1 {
-            margin: 0;
-            font-size: 28px;
-            letter-spacing: 0.4px;
-        }
-
-        .pill {
-            padding: 6px 10px;
-            border-radius: 999px;
-            background: linear-gradient(120deg, rgba(249, 115, 22, 0.9), rgba(34, 211, 238, 0.85));
-            color: #0b0f1a;
-            font-weight: 700;
-            font-size: 12px;
-            letter-spacing: 0.4px;
-            text-transform: uppercase;
-        }
-
-        p.lead {
-            margin: 8px 0 0;
-            color: var(--muted);
-            max-width: 740px;
-        }
-
-        .layout {
-            display: grid;
-            grid-template-columns: 1fr 0.95fr;
-            gap: 16px;
-            align-items: start;
-        }
-
-        .stack {
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-        }
-
-        .card {
-            background: linear-gradient(180deg, var(--panel), var(--panel-2));
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 18px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
-        }
-
-        .card.secondary {
-            border-style: dashed;
-            border-color: rgba(255, 255, 255, 0.08);
-            background: linear-gradient(180deg, #0e1626, #111a2c);
-        }
-
-        .section-title {
-            margin: 0 0 12px;
-            font-size: 15px;
-            letter-spacing: 0.6px;
-            text-transform: uppercase;
-            color: var(--muted);
-        }
-
-        form {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 14px;
-        }
-
-        label {
-            display: block;
-            font-size: 13px;
-            color: var(--muted);
-            margin-bottom: 6px;
-        }
-
-        input[type="text"],
-        input[type="number"],
-        select {
-            width: 100%;
-            padding: 11px 12px;
-            border-radius: 10px;
-            border: 1px solid var(--border);
-            background: rgba(255, 255, 255, 0.02);
-            color: var(--text);
-            font-size: 15px;
-        }
-
-        input[type="checkbox"] {
-            transform: scale(1.1);
-            margin-right: 10px;
-            accent-color: var(--accent);
-        }
-
-        .checkbox-row {
-            display: flex;
-            align-items: center;
-            padding: 11px 12px;
-            border-radius: 10px;
-            border: 1px solid var(--border);
-            background: rgba(255, 255, 255, 0.02);
-        }
-
-        .actions {
-            grid-column: 1 / -1;
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            margin-top: 4px;
-        }
-
-        button {
-            background: linear-gradient(120deg, var(--accent), #ffae3d);
-            color: #0b0f1a;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 12px;
-            font-weight: 700;
-            font-size: 15px;
-            cursor: pointer;
-            box-shadow: 0 8px 20px rgba(249, 115, 22, 0.35);
-        }
-
-        button:hover {
-            transform: translateY(-1px);
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 12px;
-            margin-bottom: 12px;
-        }
-
-        .stat {
-            padding: 14px;
-            border-radius: 12px;
-            border: 1px solid var(--border);
-            background: rgba(255, 255, 255, 0.02);
-        }
-
-        .stat small {
-            color: var(--muted);
-            letter-spacing: 0.4px;
-        }
-
-        .stat .value {
-            font-size: 30px;
-            font-weight: 800;
-            margin-top: 6px;
-        }
-
-        .band {
-            margin-bottom: 12px;
-        }
-
-        .band-title {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            color: var(--muted);
-            font-size: 14px;
-            margin-bottom: 6px;
-        }
-
-        .bar {
-            position: relative;
-            width: 100%;
-            height: 12px;
-            border-radius: 999px;
-            background: rgba(255, 255, 255, 0.04);
-            overflow: hidden;
-            border: 1px solid var(--border);
-        }
-
-        .bar span {
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(120deg, var(--accent-2), var(--accent));
-            width: 0;
-            transition: width 0.25s ease;
-        }
-
-        .errorlist {
-            list-style: none;
-            margin: 6px 0 0;
-            padding: 0;
-            color: #fca5a5;
-            font-size: 13px;
-        }
-
-        .alert {
-            grid-column: 1 / -1;
-            padding: 12px 14px;
-            border-radius: 12px;
-            border: 1px solid rgba(249, 115, 22, 0.4);
-            background: rgba(249, 115, 22, 0.08);
-            color: #ffd7ba;
-        }
-
-        .chip-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 12px;
-        }
-
-        .chip {
-            padding: 10px 12px;
-            border-radius: 10px;
-            border: 1px solid var(--border);
-            background: rgba(255, 255, 255, 0.03);
-            min-width: 160px;
-        }
-
-        .chip small {
-            color: var(--muted);
-            letter-spacing: 0.4px;
-        }
-
-        .chip strong {
-            display: block;
-            margin-top: 4px;
-            font-size: 15px;
-        }
-
-        @media (max-width: 860px) {
-            .layout {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="page">
-        <header>
-            <div class="title">
-                <h1>Trench Calculator</h1>
-                <span class="pill">2d6 + keep 2</span>
-            </div>
-            <p class="lead">
-                Pick attacker/target profiles, optionally pick a weapon (its keywords apply), then layer situational modifiers to see hit and injury odds.
-            </p>
-        </header>
-
-        <div class="layout">
-            <div class="stack">
-                <div class="card">
-                    <p class="section-title">Attack setup</p>
-                    <form method="post" novalidate>
-                        {% csrf_token %}
-                        {% if attack_form.errors %}
-                            <div class="alert">Please fix the highlighted fields.</div>
-                        {% endif %}
-                        <div>
-                            <label for="{{ attack_form.attacker_profile.id_for_label }}">{{ attack_form.attacker_profile.label }}</label>
-                            {{ attack_form.attacker_profile }}
-                            {{ attack_form.attacker_profile.errors }}
-                        </div>
-                        <div>
-                            <label for="{{ attack_form.defender_profile.id_for_label }}">{{ attack_form.defender_profile.label }}</label>
-                            {{ attack_form.defender_profile }}
-                            {{ attack_form.defender_profile.errors }}
-                        </div>
-                        <div>
-                            <label for="{{ attack_form.weapon.id_for_label }}">{{ attack_form.weapon.label }}</label>
-                            {{ attack_form.weapon }}
-                            {{ attack_form.weapon.errors }}
-                        </div>
-                        <div>
-                            <label for="{{ attack_form.attack_type.id_for_label }}">{{ attack_form.attack_type.label }}</label>
-                            {{ attack_form.attack_type }}
-                            <small style="color: var(--muted); display:block; margin-top:4px;">If a weapon is chosen, its range type overrides this toggle.</small>
-                            {{ attack_form.attack_type.errors }}
-                        </div>
-                        <div>
-                            <label for="{{ attack_form.hit_target_number.id_for_label }}">{{ attack_form.hit_target_number.label }}</label>
-                            {{ attack_form.hit_target_number }}
-                            {{ attack_form.hit_target_number.errors }}
-                        </div>
-                        <div>
-                            <label for="{{ attack_form.extra_hit_dice_mod.id_for_label }}">{{ attack_form.extra_hit_dice_mod.label }}</label>
-                            {{ attack_form.extra_hit_dice_mod }}
-                            {{ attack_form.extra_hit_dice_mod.errors }}
-                        </div>
-                        <div>
-                            <label for="{{ attack_form.hit_roll_mod.id_for_label }}">{{ attack_form.hit_roll_mod.label }}</label>
-                            {{ attack_form.hit_roll_mod }}
-                            {{ attack_form.hit_roll_mod.errors }}
-                        </div>
-                        <div>
-                            <label for="{{ attack_form.injury_dice_mod.id_for_label }}">{{ attack_form.injury_dice_mod.label }}</label>
-                            {{ attack_form.injury_dice_mod }}
-                            {{ attack_form.injury_dice_mod.errors }}
-                        </div>
-                        <div>
-                            <label for="{{ attack_form.injury_roll_mod.id_for_label }}">{{ attack_form.injury_roll_mod.label }}</label>
-                            {{ attack_form.injury_roll_mod }}
-                            {{ attack_form.injury_roll_mod.errors }}
-                        </div>
-                        <div>
-                            <label for="{{ attack_form.extra_target_armor.id_for_label }}">{{ attack_form.extra_target_armor.label }}</label>
-                            {{ attack_form.extra_target_armor }}
-                            {{ attack_form.extra_target_armor.errors }}
-                        </div>
-                        <div class="checkbox-row">
-                            {{ attack_form.weapon_is_critical }}<label for="{{ attack_form.weapon_is_critical.id_for_label }}">{{ attack_form.weapon_is_critical.label }}</label>
-                            {{ attack_form.weapon_is_critical.errors }}
-                        </div>
-                        <div class="actions">
-                            <button type="submit" name="run_calc" value="1">Recalculate</button>
-                        </div>
-                    </form>
-                </div>
-
-                <div class="card secondary">
-                    <p class="section-title">Add a weapon</p>
-                    <form method="post" novalidate>
-                        {% csrf_token %}
-                        {% if weapon_form.errors %}
-                            <div class="alert">Please fix the highlighted weapon fields.</div>
-                        {% endif %}
-                        <div>
-                            <label for="{{ weapon_form.name.id_for_label }}">{{ weapon_form.name.label }}</label>
-                            {{ weapon_form.name }}
-                            {{ weapon_form.name.errors }}
-                        </div>
-                        <div>
-                            <label for="{{ weapon_form.weapon_type.id_for_label }}">{{ weapon_form.weapon_type.label }}</label>
-                            {{ weapon_form.weapon_type }}
-                            {{ weapon_form.weapon_type.errors }}
-                        </div>
-                        <div>
-                            <label for="{{ weapon_form.range_type.id_for_label }}">{{ weapon_form.range_type.label }}</label>
-                            {{ weapon_form.range_type }}
-                            {{ weapon_form.range_type.errors }}
-                        </div>
-                        <div>
-                            <label for="{{ weapon_form.range_inches.id_for_label }}">{{ weapon_form.range_inches.label }}</label>
-                            {{ weapon_form.range_inches }}
-                            {{ weapon_form.range_inches.errors }}
-                        </div>
-                        <div>
-                            <label for="{{ weapon_form.keywords.id_for_label }}">{{ weapon_form.keywords.label }}</label>
-                            {{ weapon_form.keywords }}
-                            {{ weapon_form.keywords.errors }}
-                        </div>
-                        <div class="actions">
-                            <button type="submit" name="create_weapon" value="1">Add weapon</button>
-                        </div>
-                    </form>
-                </div>
-
-                <div class="card secondary">
-                    <p class="section-title">Add a unit profile</p>
-                    <form method="post" novalidate>
-                        {% csrf_token %}
-                        {% if profile_form.errors %}
-                            <div class="alert">Please fix the highlighted profile fields.</div>
-                        {% endif %}
-                        <div>
-                            <label for="{{ profile_form.name.id_for_label }}">{{ profile_form.name.label }}</label>
-                            {{ profile_form.name }}
-                            {{ profile_form.name.errors }}
-                        </div>
-                        <div>
-                            <label for="{{ profile_form.ranged_dice_mod.id_for_label }}">{{ profile_form.ranged_dice_mod.label }}</label>
-                            {{ profile_form.ranged_dice_mod }}
-                            {{ profile_form.ranged_dice_mod.errors }}
-                        </div>
-                        <div>
-                            <label for="{{ profile_form.melee_dice_mod.id_for_label }}">{{ profile_form.melee_dice_mod.label }}</label>
-                            {{ profile_form.melee_dice_mod }}
-                            {{ profile_form.melee_dice_mod.errors }}
-                        </div>
-                        <div>
-                            <label for="{{ profile_form.armor.id_for_label }}">{{ profile_form.armor.label }}</label>
-                            {{ profile_form.armor }}
-                            {{ profile_form.armor.errors }}
-                        </div>
-                        <div>
-                            <label for="{{ profile_form.keywords.id_for_label }}">{{ profile_form.keywords.label }}</label>
-                            {{ profile_form.keywords }}
-                            {{ profile_form.keywords.errors }}
-                        </div>
-                        <div>
-                            <label for="{{ profile_form.weapons.id_for_label }}">{{ profile_form.weapons.label }}</label>
-                            {{ profile_form.weapons }}
-                            {{ profile_form.weapons.errors }}
-                        </div>
-                        <div class="actions">
-                            <button type="submit" name="create_profile" value="1">Add profile</button>
-                        </div>
-                    </form>
-                </div>
-
-                <div class="card secondary">
-                    <p class="section-title">Add a keyword</p>
-                    <form method="post" novalidate>
-                        {% csrf_token %}
-                        {% if keyword_form.errors %}
-                            <div class="alert">Please fix the highlighted keyword fields.</div>
-                        {% endif %}
-                        <div>
-                            <label for="{{ keyword_form.name.id_for_label }}">{{ keyword_form.name.label }}</label>
-                            {{ keyword_form.name }}
-                            {{ keyword_form.name.errors }}
-                        </div>
-                        <div>
-                            <label for="{{ keyword_form.ranged_dice_mod.id_for_label }}">{{ keyword_form.ranged_dice_mod.label }}</label>
-                            {{ keyword_form.ranged_dice_mod }}
-                            {{ keyword_form.ranged_dice_mod.errors }}
-                        </div>
-                        <div>
-                            <label for="{{ keyword_form.melee_dice_mod.id_for_label }}">{{ keyword_form.melee_dice_mod.label }}</label>
-                            {{ keyword_form.melee_dice_mod }}
-                            {{ keyword_form.melee_dice_mod.errors }}
-                        </div>
-                        <div>
-                            <label for="{{ keyword_form.armor_mod.id_for_label }}">{{ keyword_form.armor_mod.label }}</label>
-                            {{ keyword_form.armor_mod }}
-                            {{ keyword_form.armor_mod.errors }}
-                        </div>
-                        <div class="actions">
-                            <button type="submit" name="create_keyword" value="1">Add keyword</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            <div class="card">
-                {% if results %}
-                    <p class="section-title">Results</p>
-                    <div class="chip-row">
-                        <div class="chip">
-                            <small>Attacker</small>
-                            <strong>{{ results.attacker.name }}</strong>
-                        </div>
-                        <div class="chip">
-                            <small>Attacker weapons</small>
-                            <strong>
-                                {% if results.attacker_weapons %}
-                                    {{ results.attacker_weapons|join:", " }}
-                                {% else %}
-                                    None
-                                {% endif %}
-                            </strong>
-                        </div>
-                        <div class="chip">
-                            <small>Weapon</small>
-                            <strong>
-                                {% if results.weapon %}
-                                    {{ results.weapon.name }} ({{ results.weapon.weapon_type|capfirst }}, {{ results.weapon.range_type|capfirst }}{% if results.weapon.range_inches %} {{ results.weapon.range_inches }}\"{% endif %})
-                                {% else %}
-                                    None
-                                {% endif %}
-                            </strong>
-                        </div>
-                        <div class="chip">
-                            <small>Target</small>
-                            <strong>{{ results.defender.name }}</strong>
-                        </div>
-                        <div class="chip">
-                            <small>Attack type</small>
-                            <strong>{{ results.attack_type|capfirst }}</strong>
-                        </div>
-                    </div>
-                    <div class="chip-row">
-                        <div class="chip">
-                            <small>Hit dice mod</small>
-                            <strong>{{ results.base_hit_dice_mod }} base, {{ results.keyword_hit_mod }} unit keywords, {{ results.weapon_hit_mod }} weapon keywords, {{ results.extra_hit_dice_mod }} extra = {{ results.hit_dice_mod }}</strong>
-                        </div>
-                        <div class="chip">
-                            <small>Armor applied</small>
-                            <strong>{{ results.base_armor }} base, {{ results.keyword_armor_mod }} keywords, {{ results.extra_target_armor }} extra = {{ results.target_armor }}</strong>
-                        </div>
-                        <div class="chip">
-                            <small>Hit TN / roll mod</small>
-                            <strong>{{ results.hit_target_number }} TN, {{ results.hit_roll_mod }} roll mod</strong>
-                        </div>
-                        <div class="chip">
-                            <small>Injury mods</small>
-                            <strong>{{ results.injury_dice_mod }}d, {{ results.injury_roll_mod }} roll mod</strong>
-                        </div>
-                    </div>
-                    <div class="chip-row">
-                        <div class="chip">
-                            <small>Attacker keywords</small>
-                            <strong>
-                                {% if results.attacker_keywords %}
-                                    {{ results.attacker_keywords|join:", " }}
-                                {% else %}
-                                    None
-                                {% endif %}
-                            </strong>
-                        </div>
-                        <div class="chip">
-                            <small>Weapon keywords</small>
-                            <strong>
-                                {% if results.weapon_keywords %}
-                                    {{ results.weapon_keywords|join:", " }}
-                                {% else %}
-                                    None
-                                {% endif %}
-                            </strong>
-                        </div>
-                        <div class="chip">
-                            <small>Target keywords</small>
-                            <strong>
-                                {% if results.defender_keywords %}
-                                    {{ results.defender_keywords|join:", " }}
-                                {% else %}
-                                    None
-                                {% endif %}
-                            </strong>
-                        </div>
-                    </div>
-
-                    <div class="stats-grid">
-                        <div class="stat">
-                            <small>Hit chance</small>
-                            <div class="value">{{ results.hit_probability }}</div>
-                        </div>
-                        <div class="stat">
-                            <small>Miss chance</small>
-                            <div class="value">{{ results.miss_probability }}</div>
-                        </div>
-                        <div class="stat">
-                            <small>Any injury</small>
-                            <div class="value">{{ results.any_injury_probability }}</div>
-                        </div>
-                    </div>
-
-                    <div>
-                        {% for band in results.bands %}
-                            <div class="band">
-                                <div class="band-title">
-                                    <span>{{ band.label }}</span>
-                                    <strong>{{ band.percent }}</strong>
-                                </div>
-                                <div class="bar">
-                                    <span style="width: {{ band.percent }};"></span>
-                                </div>
-                            </div>
-                        {% endfor %}
-                    </div>
-                    <p class="lead" style="margin-top: 6px;">
-                        Injury bands use the default steps: 2-6 Flesh Wound, 7-8 Down, 9+ Out of Action.
-                    </p>
-                {% else %}
-                    <p class="lead">Add a profile and submit the attack form to see probabilities.</p>
+{% extends "calculator/base.html" %}
+{% block content %}
+    <p class="lead">
+        Pick attacker/target profiles, optionally pick a weapon (its keywords apply), then layer situational modifiers to see hit and injury odds.
+    </p>
+    <div class="layout">
+        <div class="card">
+            <p class="section-title">Attack setup</p>
+            <form method="post" novalidate>
+                {% csrf_token %}
+                {% if attack_form.errors %}
+                    <div class="alert">Please fix the highlighted fields.</div>
                 {% endif %}
-            </div>
+                <div>
+                    <label for="{{ attack_form.attacker_profile.id_for_label }}">{{ attack_form.attacker_profile.label }}</label>
+                    {{ attack_form.attacker_profile }}
+                    {{ attack_form.attacker_profile.errors }}
+                </div>
+                <div>
+                    <label for="{{ attack_form.defender_profile.id_for_label }}">{{ attack_form.defender_profile.label }}</label>
+                    {{ attack_form.defender_profile }}
+                    {{ attack_form.defender_profile.errors }}
+                </div>
+                <div>
+                    <label for="{{ attack_form.weapon.id_for_label }}">{{ attack_form.weapon.label }}</label>
+                    {{ attack_form.weapon }}
+                    {{ attack_form.weapon.errors }}
+                </div>
+                <div>
+                    <label for="{{ attack_form.attack_type.id_for_label }}">{{ attack_form.attack_type.label }}</label>
+                    {{ attack_form.attack_type }}
+                    <small style="color: var(--muted); display:block; margin-top:4px;">If a weapon is chosen, its range type overrides this toggle.</small>
+                    {{ attack_form.attack_type.errors }}
+                </div>
+                <div>
+                    <label for="{{ attack_form.hit_target_number.id_for_label }}">{{ attack_form.hit_target_number.label }}</label>
+                    {{ attack_form.hit_target_number }}
+                    {{ attack_form.hit_target_number.errors }}
+                </div>
+                <div>
+                    <label for="{{ attack_form.extra_hit_dice_mod.id_for_label }}">{{ attack_form.extra_hit_dice_mod.label }}</label>
+                    {{ attack_form.extra_hit_dice_mod }}
+                    {{ attack_form.extra_hit_dice_mod.errors }}
+                </div>
+                <div>
+                    <label for="{{ attack_form.hit_roll_mod.id_for_label }}">{{ attack_form.hit_roll_mod.label }}</label>
+                    {{ attack_form.hit_roll_mod }}
+                    {{ attack_form.hit_roll_mod.errors }}
+                </div>
+                <div>
+                    <label for="{{ attack_form.injury_dice_mod.id_for_label }}">{{ attack_form.injury_dice_mod.label }}</label>
+                    {{ attack_form.injury_dice_mod }}
+                    {{ attack_form.injury_dice_mod.errors }}
+                </div>
+                <div>
+                    <label for="{{ attack_form.injury_roll_mod.id_for_label }}">{{ attack_form.injury_roll_mod.label }}</label>
+                    {{ attack_form.injury_roll_mod }}
+                    {{ attack_form.injury_roll_mod.errors }}
+                </div>
+                <div>
+                    <label for="{{ attack_form.extra_target_armor.id_for_label }}">{{ attack_form.extra_target_armor.label }}</label>
+                    {{ attack_form.extra_target_armor }}
+                    {{ attack_form.extra_target_armor.errors }}
+                </div>
+                <div class="checkbox-row">
+                    {{ attack_form.weapon_is_critical }}<label for="{{ attack_form.weapon_is_critical.id_for_label }}">{{ attack_form.weapon_is_critical.label }}</label>
+                    {{ attack_form.weapon_is_critical.errors }}
+                </div>
+                <div class="actions">
+                    <button type="submit" name="run_calc" value="1">Recalculate</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="card">
+            {% if results %}
+                <p class="section-title">Results</p>
+                <div class="chip-row">
+                    <div class="chip">
+                        <small>Attacker</small>
+                        <strong>{{ results.attacker.name }}</strong>
+                    </div>
+                    <div class="chip">
+                        <small>Attacker weapons</small>
+                        <strong>
+                            {% if results.attacker_weapons %}
+                                {{ results.attacker_weapons|join:", " }}
+                            {% else %}
+                                None
+                            {% endif %}
+                        </strong>
+                    </div>
+                    <div class="chip">
+                        <small>Weapon</small>
+                        <strong>
+                            {% if results.weapon %}
+                                {{ results.weapon.name }} ({{ results.weapon.weapon_type|capfirst }}, {{ results.weapon.range_type|capfirst }}{% if results.weapon.range_inches %} {{ results.weapon.range_inches }}" {% endif %})
+                            {% else %}
+                                None
+                            {% endif %}
+                        </strong>
+                    </div>
+                    <div class="chip">
+                        <small>Target</small>
+                        <strong>{{ results.defender.name }}</strong>
+                    </div>
+                    <div class="chip">
+                        <small>Attack type</small>
+                        <strong>{{ results.attack_type|capfirst }}</strong>
+                    </div>
+                </div>
+                <div class="chip-row">
+                    <div class="chip">
+                        <small>Hit dice mod</small>
+                        <strong>{{ results.base_hit_dice_mod }} base, {{ results.keyword_hit_mod }} unit keywords, {{ results.weapon_hit_mod }} weapon keywords, {{ results.extra_hit_dice_mod }} extra = {{ results.hit_dice_mod }}</strong>
+                    </div>
+                    <div class="chip">
+                        <small>Armor applied</small>
+                        <strong>{{ results.base_armor }} base, {{ results.keyword_armor_mod }} keywords, {{ results.extra_target_armor }} extra = {{ results.target_armor }}</strong>
+                    </div>
+                    <div class="chip">
+                        <small>Hit TN / roll mod</small>
+                        <strong>{{ results.hit_target_number }} TN, {{ results.hit_roll_mod }} roll mod</strong>
+                    </div>
+                    <div class="chip">
+                        <small>Injury mods</small>
+                        <strong>{{ results.injury_dice_mod }}d, {{ results.injury_roll_mod }} roll mod</strong>
+                    </div>
+                </div>
+                <div class="chip-row">
+                    <div class="chip">
+                        <small>Attacker keywords</small>
+                        <strong>
+                            {% if results.attacker_keywords %}
+                                {{ results.attacker_keywords|join:", " }}
+                            {% else %}
+                                None
+                            {% endif %}
+                        </strong>
+                    </div>
+                    <div class="chip">
+                        <small>Weapon keywords</small>
+                        <strong>
+                            {% if results.weapon_keywords %}
+                                {{ results.weapon_keywords|join:", " }}
+                            {% else %}
+                                None
+                            {% endif %}
+                        </strong>
+                    </div>
+                    <div class="chip">
+                        <small>Target keywords</small>
+                        <strong>
+                            {% if results.defender_keywords %}
+                                {{ results.defender_keywords|join:", " }}
+                            {% else %}
+                                None
+                            {% endif %}
+                        </strong>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat">
+                        <small>Hit chance</small>
+                        <div class="value">{{ results.hit_probability }}</div>
+                    </div>
+                    <div class="stat">
+                        <small>Miss chance</small>
+                        <div class="value">{{ results.miss_probability }}</div>
+                    </div>
+                    <div class="stat">
+                        <small>Any injury</small>
+                        <div class="value">{{ results.any_injury_probability }}</div>
+                    </div>
+                </div>
+
+                <div>
+                    {% for band in results.bands %}
+                        <div class="band">
+                            <div class="band-title">
+                                <span>{{ band.label }}</span>
+                                <strong>{{ band.percent }}</strong>
+                            </div>
+                            <div class="bar">
+                                <span style="width: {{ band.percent }};"></span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                <p class="lead" style="margin-top: 6px;">
+                    Injury bands use the default steps: 2-6 Flesh Wound, 7-8 Down, 9+ Out of Action.
+                </p>
+            {% else %}
+                <p class="lead">Add a profile and submit the attack form to see probabilities.</p>
+            {% endif %}
         </div>
     </div>
-</body>
-</html>
+{% endblock %}

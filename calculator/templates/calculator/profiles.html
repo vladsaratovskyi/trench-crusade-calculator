@@ -1,0 +1,92 @@
+{% extends "calculator/base.html" %}
+{% block content %}
+    <p class="lead">
+        View, edit, add, or delete unit profiles. Cards show quick stats; click edit to load the form.
+    </p>
+    <div class="layout">
+        <div class="card">
+            <p class="section-title">Unit profiles</p>
+            <div class="grid">
+                {% for profile in profiles %}
+                    <div class="profile-card">
+                        <div class="avatar"></div>
+                        <div class="profile-meta">
+                            <strong>{{ profile.name }}</strong>
+                            <div class="stat-row">
+                                <span class="tag">Ranged {{ profile.ranged_dice_mod }}d</span>
+                                <span class="tag">Melee {{ profile.melee_dice_mod }}d</span>
+                                <span class="tag">Armor {{ profile.armor }}</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="tag">Keywords: {% if profile.keywords.all %}{{ profile.keywords.all|join:", " }}{% else %}None{% endif %}</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="tag">Weapons: {% if profile.weapons.all %}{{ profile.weapons.all|join:", " }}{% else %}None{% endif %}</span>
+                            </div>
+                            <div class="actions" style="justify-content:flex-start;">
+                                <a href="{% url 'profile_list' %}?edit={{ profile.id }}" class="btn-link secondary">Edit</a>
+                                <form method="post" style="margin:0;padding:0;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="profile_id" value="{{ profile.id }}">
+                                    <button type="submit" name="delete_profile" value="1">Delete</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <p class="lead">No profiles yet. Add one using the form.</p>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="card secondary">
+            <p class="section-title">{% if editing_profile %}Edit profile{% else %}Add a unit profile{% endif %}</p>
+            <form method="post" novalidate>
+                {% csrf_token %}
+                {% if profile_form.errors %}
+                    <div class="alert">Please fix the highlighted profile fields.</div>
+                {% endif %}
+                {% if editing_profile %}
+                    <input type="hidden" name="profile_id" value="{{ editing_profile.id }}">
+                {% endif %}
+                <div>
+                    <label for="{{ profile_form.name.id_for_label }}">{{ profile_form.name.label }}</label>
+                    {{ profile_form.name }}
+                    {{ profile_form.name.errors }}
+                </div>
+                <div>
+                    <label for="{{ profile_form.ranged_dice_mod.id_for_label }}">{{ profile_form.ranged_dice_mod.label }}</label>
+                    {{ profile_form.ranged_dice_mod }}
+                    {{ profile_form.ranged_dice_mod.errors }}
+                </div>
+                <div>
+                    <label for="{{ profile_form.melee_dice_mod.id_for_label }}">{{ profile_form.melee_dice_mod.label }}</label>
+                    {{ profile_form.melee_dice_mod }}
+                    {{ profile_form.melee_dice_mod.errors }}
+                </div>
+                <div>
+                    <label for="{{ profile_form.armor.id_for_label }}">{{ profile_form.armor.label }}</label>
+                    {{ profile_form.armor }}
+                    {{ profile_form.armor.errors }}
+                </div>
+                <div>
+                    <label for="{{ profile_form.keywords.id_for_label }}">{{ profile_form.keywords.label }}</label>
+                    {{ profile_form.keywords }}
+                    {{ profile_form.keywords.errors }}
+                </div>
+                <div>
+                    <label for="{{ profile_form.weapons.id_for_label }}">{{ profile_form.weapons.label }}</label>
+                    {{ profile_form.weapons }}
+                    {{ profile_form.weapons.errors }}
+                </div>
+                <div class="actions">
+                    {% if editing_profile %}
+                        <button type="submit" name="save_profile" value="1">Save changes</button>
+                        <a href="{% url 'profile_list' %}" class="btn-link secondary">Cancel</a>
+                    {% else %}
+                        <button type="submit" name="create_profile" value="1">Add profile</button>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}

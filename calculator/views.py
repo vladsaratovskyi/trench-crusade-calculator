@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, redirect, render
 
 from .forms import AttackInputForm, KeywordForm, UnitProfileForm, WeaponForm
 from .logic import (
@@ -123,56 +123,10 @@ def calculator_view(request):
     _ensure_profiles_exist()
     results = None
     attack_form = AttackInputForm(request.POST or None, prefix="attack")
-    profile_form = UnitProfileForm(prefix="profile")
-    keyword_form = KeywordForm(prefix="keyword")
-    weapon_form = WeaponForm(prefix="weapon")
 
-    if request.method == "POST":
-        if "create_profile" in request.POST:
-            profile_form = UnitProfileForm(request.POST, prefix="profile")
-            attack_form = AttackInputForm(prefix="attack")
-            if profile_form.is_valid():
-                new_profile = profile_form.save()
-                profile_form = UnitProfileForm(prefix="profile")
-                attack_form = AttackInputForm(
-                    prefix="attack",
-                    initial={
-                        "attacker_profile": new_profile,
-                        "defender_profile": new_profile,
-                        "weapon": new_profile.weapons.first(),
-                    },
-                )
-        elif "create_keyword" in request.POST:
-            keyword_form = KeywordForm(request.POST, prefix="keyword")
-            attack_form = AttackInputForm(prefix="attack")
-            profile_form = UnitProfileForm(prefix="profile")
-            weapon_form = WeaponForm(prefix="weapon")
-            if keyword_form.is_valid():
-                keyword_form.save()
-                keyword_form = KeywordForm(prefix="keyword")
-                # Refresh profile form choices to include new keyword
-                profile_form = UnitProfileForm(prefix="profile")
-                weapon_form = WeaponForm(prefix="weapon")
-        elif "create_weapon" in request.POST:
-            weapon_form = WeaponForm(request.POST, prefix="weapon")
-            attack_form = AttackInputForm(prefix="attack")
-            profile_form = UnitProfileForm(prefix="profile")
-            keyword_form = KeywordForm(prefix="keyword")
-            if weapon_form.is_valid():
-                new_weapon = weapon_form.save()
-                weapon_form = WeaponForm(prefix="weapon")
-                attack_form = AttackInputForm(
-                    prefix="attack",
-                    initial={"weapon": new_weapon},
-                )
-        else:
-            if attack_form.is_bound and attack_form.is_valid():
-                results = _build_results(attack_form.cleaned_data)
-            profile_form = UnitProfileForm(prefix="profile")
-            keyword_form = KeywordForm(prefix="keyword")
-            weapon_form = WeaponForm(prefix="weapon")
-
-    if results is None:
+    if attack_form.is_bound and attack_form.is_valid():
+        results = _build_results(attack_form.cleaned_data)
+    else:
         defaults = _default_payload()
         if defaults:
             results = _build_results(defaults)
@@ -181,6 +135,7 @@ def calculator_view(request):
                     {
                         "attacker_profile": defaults["attacker_profile"],
                         "defender_profile": defaults["defender_profile"],
+                        "weapon": defaults.get("weapon"),
                     }
                 )
 
@@ -189,9 +144,110 @@ def calculator_view(request):
         "calculator/index.html",
         {
             "attack_form": attack_form,
-            "profile_form": profile_form,
-            "keyword_form": keyword_form,
-            "weapon_form": weapon_form,
             "results": results,
+            "nav_active": "calc",
+        },
+    )
+
+
+def profile_list(request):
+    _ensure_profiles_exist()
+    profiles = UnitProfile.objects.prefetch_related("keywords", "weapons")
+    form = UnitProfileForm(request.POST or None, prefix="profile")
+    editing = None
+
+    if request.method == "POST":
+        if "delete_profile" in request.POST:
+            target = get_object_or_404(UnitProfile, pk=request.POST.get("profile_id"))
+            target.delete()
+            return redirect("profile_list")
+        else:
+            if request.POST.get("profile_id"):
+                editing = get_object_or_404(UnitProfile, pk=request.POST.get("profile_id"))
+                form = UnitProfileForm(request.POST, prefix="profile", instance=editing)
+            if form.is_valid():
+                form.save()
+                return redirect("profile_list")
+
+    if request.GET.get("edit"):
+        editing = get_object_or_404(UnitProfile, pk=request.GET.get("edit"))
+        form = UnitProfileForm(prefix="profile", instance=editing)
+
+    return render(
+        request,
+        "calculator/profiles.html",
+        {
+            "profiles": profiles,
+            "profile_form": form,
+            "editing_profile": editing,
+            "nav_active": "profiles",
+        },
+    )
+
+
+def weapon_list(request):
+    weapons = Weapon.objects.prefetch_related("keywords")
+    form = WeaponForm(request.POST or None, prefix="weapon")
+    editing = None
+
+    if request.method == "POST":
+        if "delete_weapon" in request.POST:
+            target = get_object_or_404(Weapon, pk=request.POST.get("weapon_id"))
+            target.delete()
+            return redirect("weapon_list")
+        else:
+            if request.POST.get("weapon_id"):
+                editing = get_object_or_404(Weapon, pk=request.POST.get("weapon_id"))
+                form = WeaponForm(request.POST, prefix="weapon", instance=editing)
+            if form.is_valid():
+                form.save()
+                return redirect("weapon_list")
+
+    if request.GET.get("edit"):
+        editing = get_object_or_404(Weapon, pk=request.GET.get("edit"))
+        form = WeaponForm(prefix="weapon", instance=editing)
+
+    return render(
+        request,
+        "calculator/weapons.html",
+        {
+            "weapons": weapons,
+            "weapon_form": form,
+            "editing_weapon": editing,
+            "nav_active": "weapons",
+        },
+    )
+
+
+def keyword_list(request):
+    keywords = Keyword.objects.all()
+    form = KeywordForm(request.POST or None, prefix="keyword")
+    editing = None
+
+    if request.method == "POST":
+        if "delete_keyword" in request.POST:
+            target = get_object_or_404(Keyword, pk=request.POST.get("keyword_id"))
+            target.delete()
+            return redirect("keyword_list")
+        else:
+            if request.POST.get("keyword_id"):
+                editing = get_object_or_404(Keyword, pk=request.POST.get("keyword_id"))
+                form = KeywordForm(request.POST, prefix="keyword", instance=editing)
+            if form.is_valid():
+                form.save()
+                return redirect("keyword_list")
+
+    if request.GET.get("edit"):
+        editing = get_object_or_404(Keyword, pk=request.GET.get("edit"))
+        form = KeywordForm(prefix="keyword", instance=editing)
+
+    return render(
+        request,
+        "calculator/keywords.html",
+        {
+            "keywords": keywords,
+            "keyword_form": form,
+            "editing_keyword": editing,
+            "nav_active": "keywords",
         },
     )

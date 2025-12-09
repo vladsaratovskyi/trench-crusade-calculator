@@ -1,0 +1,71 @@
+{% extends "calculator/base.html" %}
+{% block content %}
+    <p class="lead">
+        Manage keywords: add traits that modify dice or armor, edit them, or delete unused ones.
+    </p>
+    <div class="layout">
+        <div class="card">
+            <p class="section-title">Keywords</p>
+            <div class="grid">
+                {% for keyword in keywords %}
+                    <div class="item-card">
+                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                            <strong>{{ keyword.name }}</strong>
+                            <div class="actions" style="gap:6px;justify-content:flex-end;grid-column:auto;">
+                                <a class="btn-link secondary" href="{% url 'keyword_list' %}?edit={{ keyword.id }}">Edit</a>
+                                <form method="post" style="margin:0;padding:0;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="keyword_id" value="{{ keyword.id }}">
+                                    <button type="submit" name="delete_keyword" value="1">Delete</button>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="tag">Ranged {{ keyword.ranged_dice_mod }}d · Melee {{ keyword.melee_dice_mod }}d · Armor {{ keyword.armor_mod }}</div>
+                    </div>
+                {% empty %}
+                    <p class="lead">No keywords yet. Add one below.</p>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="card secondary">
+            <p class="section-title">{% if editing_keyword %}Edit keyword{% else %}Add a keyword{% endif %}</p>
+            <form method="post" novalidate>
+                {% csrf_token %}
+                {% if keyword_form.errors %}
+                    <div class="alert">Please fix the highlighted keyword fields.</div>
+                {% endif %}
+                {% if editing_keyword %}
+                    <input type="hidden" name="keyword_id" value="{{ editing_keyword.id }}">
+                {% endif %}
+                <div>
+                    <label for="{{ keyword_form.name.id_for_label }}">{{ keyword_form.name.label }}</label>
+                    {{ keyword_form.name }}
+                    {{ keyword_form.name.errors }}
+                </div>
+                <div>
+                    <label for="{{ keyword_form.ranged_dice_mod.id_for_label }}">{{ keyword_form.ranged_dice_mod.label }}</label>
+                    {{ keyword_form.ranged_dice_mod }}
+                    {{ keyword_form.ranged_dice_mod.errors }}
+                </div>
+                <div>
+                    <label for="{{ keyword_form.melee_dice_mod.id_for_label }}">{{ keyword_form.melee_dice_mod.label }}</label>
+                    {{ keyword_form.melee_dice_mod }}
+                    {{ keyword_form.melee_dice_mod.errors }}
+                </div>
+                <div>
+                    <label for="{{ keyword_form.armor_mod.id_for_label }}">{{ keyword_form.armor_mod.label }}</label>
+                    {{ keyword_form.armor_mod }}
+                    {{ keyword_form.armor_mod.errors }}
+                </div>
+                <div class="actions">
+                    {% if editing_keyword %}
+                        <button type="submit" name="edit_keyword" value="1">Save keyword</button>
+                        <a href="{% url 'keyword_list' %}" class="btn-link secondary">Cancel</a>
+                    {% else %}
+                        <button type="submit" name="create_keyword" value="1">Add keyword</button>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}

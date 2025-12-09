@@ -1,0 +1,77 @@
+{% extends "calculator/base.html" %}
+{% block content %}
+    <p class="lead">
+        Manage weapons: view, edit, add, or delete. Weapon keywords feed into hit dice modifiers on the calculator.
+    </p>
+    <div class="layout">
+        <div class="card">
+            <p class="section-title">Weapons</p>
+            <div class="grid">
+                {% for weapon in weapons %}
+                    <div class="item-card">
+                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                            <strong>{{ weapon.name }}</strong>
+                            <div class="actions" style="gap:6px;justify-content:flex-end;grid-column:auto;">
+                                <a class="btn-link secondary" href="{% url 'weapon_list' %}?edit={{ weapon.id }}">Edit</a>
+                                <form method="post" style="margin:0;padding:0;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="weapon_id" value="{{ weapon.id }}">
+                                    <button type="submit" name="delete_weapon" value="1">Delete</button>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="tag">{{ weapon.get_weapon_type_display }} · {{ weapon.get_range_type_display }}{% if weapon.range_inches %} ({{ weapon.range_inches }}" range){% endif %}</div>
+                        <div class="tag">Keywords: {% if weapon.keywords.all %}{{ weapon.keywords.all|join:", " }}{% else %}None{% endif %}</div>
+                    </div>
+                {% empty %}
+                    <p class="lead">No weapons yet. Add one below.</p>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="card secondary">
+            <p class="section-title">{% if editing_weapon %}Edit weapon{% else %}Add a weapon{% endif %}</p>
+            <form method="post" novalidate>
+                {% csrf_token %}
+                {% if weapon_form.errors %}
+                    <div class="alert">Please fix the highlighted weapon fields.</div>
+                {% endif %}
+                {% if editing_weapon %}
+                    <input type="hidden" name="weapon_id" value="{{ editing_weapon.id }}">
+                {% endif %}
+                <div>
+                    <label for="{{ weapon_form.name.id_for_label }}">{{ weapon_form.name.label }}</label>
+                    {{ weapon_form.name }}
+                    {{ weapon_form.name.errors }}
+                </div>
+                <div>
+                    <label for="{{ weapon_form.weapon_type.id_for_label }}">{{ weapon_form.weapon_type.label }}</label>
+                    {{ weapon_form.weapon_type }}
+                    {{ weapon_form.weapon_type.errors }}
+                </div>
+                <div>
+                    <label for="{{ weapon_form.range_type.id_for_label }}">{{ weapon_form.range_type.label }}</label>
+                    {{ weapon_form.range_type }}
+                    {{ weapon_form.range_type.errors }}
+                </div>
+                <div>
+                    <label for="{{ weapon_form.range_inches.id_for_label }}">{{ weapon_form.range_inches.label }}</label>
+                    {{ weapon_form.range_inches }}
+                    {{ weapon_form.range_inches.errors }}
+                </div>
+                <div>
+                    <label for="{{ weapon_form.keywords.id_for_label }}">{{ weapon_form.keywords.label }}</label>
+                    {{ weapon_form.keywords }}
+                    {{ weapon_form.keywords.errors }}
+                </div>
+                <div class="actions">
+                    {% if editing_weapon %}
+                        <button type="submit" name="edit_weapon" value="1">Save weapon</button>
+                        <a href="{% url 'weapon_list' %}" class="btn-link secondary">Cancel</a>
+                    {% else %}
+                        <button type="submit" name="create_weapon" value="1">Add weapon</button>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}

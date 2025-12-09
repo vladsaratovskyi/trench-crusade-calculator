@@ -69,13 +69,20 @@
         p.lead {
             margin: 8px 0 0;
             color: var(--muted);
-            max-width: 720px;
+            max-width: 740px;
         }
 
         .layout {
             display: grid;
             grid-template-columns: 1fr 0.95fr;
             gap: 16px;
+            align-items: start;
+        }
+
+        .stack {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
         }
 
         .card {
@@ -84,6 +91,20 @@
             border-radius: 16px;
             padding: 18px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+        }
+
+        .card.secondary {
+            border-style: dashed;
+            border-color: rgba(255, 255, 255, 0.08);
+            background: linear-gradient(180deg, #0e1626, #111a2c);
+        }
+
+        .section-title {
+            margin: 0 0 12px;
+            font-size: 15px;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+            color: var(--muted);
         }
 
         form {
@@ -99,7 +120,9 @@
             margin-bottom: 6px;
         }
 
-        input[type="number"] {
+        input[type="text"],
+        input[type="number"],
+        select {
             width: 100%;
             padding: 11px 12px;
             border-radius: 10px;
@@ -213,12 +236,38 @@
         }
 
         .alert {
-            margin-bottom: 12px;
+            grid-column: 1 / -1;
             padding: 12px 14px;
             border-radius: 12px;
             border: 1px solid rgba(249, 115, 22, 0.4);
             background: rgba(249, 115, 22, 0.08);
             color: #ffd7ba;
+        }
+
+        .chip-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .chip {
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.03);
+            min-width: 160px;
+        }
+
+        .chip small {
+            color: var(--muted);
+            letter-spacing: 0.4px;
+        }
+
+        .chip strong {
+            display: block;
+            margin-top: 4px;
+            font-size: 15px;
         }
 
         @media (max-width: 860px) {
@@ -236,59 +285,144 @@
                 <span class="pill">2d6 + keep 2</span>
             </div>
             <p class="lead">
-                Adjust hit and injury parameters, then run the roll math. Defaults match the values you shared.
+                Pick attacker and target unit profiles, choose ranged or melee, then layer any situational modifiers to see hit and injury odds.
             </p>
         </header>
 
         <div class="layout">
-            <div class="card">
-                <form method="post" novalidate>
-                    {% csrf_token %}
-                    {% if form.errors %}
-                        <div class="alert">Please fix the highlighted fields.</div>
-                    {% endif %}
-                    <div>
-                        <label for="{{ form.hit_target_number.id_for_label }}">{{ form.hit_target_number.label }}</label>
-                        {{ form.hit_target_number }}
-                        {{ form.hit_target_number.errors }}
-                    </div>
-                    <div>
-                        <label for="{{ form.hit_dice_mod.id_for_label }}">{{ form.hit_dice_mod.label }}</label>
-                        {{ form.hit_dice_mod }}
-                        {{ form.hit_dice_mod.errors }}
-                    </div>
-                    <div>
-                        <label for="{{ form.hit_roll_mod.id_for_label }}">{{ form.hit_roll_mod.label }}</label>
-                        {{ form.hit_roll_mod }}
-                        {{ form.hit_roll_mod.errors }}
-                    </div>
-                    <div>
-                        <label for="{{ form.injury_dice_mod.id_for_label }}">{{ form.injury_dice_mod.label }}</label>
-                        {{ form.injury_dice_mod }}
-                        {{ form.injury_dice_mod.errors }}
-                    </div>
-                    <div>
-                        <label for="{{ form.injury_roll_mod.id_for_label }}">{{ form.injury_roll_mod.label }}</label>
-                        {{ form.injury_roll_mod }}
-                        {{ form.injury_roll_mod.errors }}
-                    </div>
-                    <div>
-                        <label for="{{ form.target_armor.id_for_label }}">{{ form.target_armor.label }}</label>
-                        {{ form.target_armor }}
-                        {{ form.target_armor.errors }}
-                    </div>
-                    <div class="checkbox-row">
-                        {{ form.weapon_is_critical }}<label for="{{ form.weapon_is_critical.id_for_label }}">{{ form.weapon_is_critical.label }}</label>
-                        {{ form.weapon_is_critical.errors }}
-                    </div>
-                    <div class="actions">
-                        <button type="submit">Recalculate</button>
-                    </div>
-                </form>
+            <div class="stack">
+                <div class="card">
+                    <p class="section-title">Attack setup</p>
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        {% if attack_form.errors %}
+                            <div class="alert">Please fix the highlighted fields.</div>
+                        {% endif %}
+                        <div>
+                            <label for="{{ attack_form.attacker_profile.id_for_label }}">{{ attack_form.attacker_profile.label }}</label>
+                            {{ attack_form.attacker_profile }}
+                            {{ attack_form.attacker_profile.errors }}
+                        </div>
+                        <div>
+                            <label for="{{ attack_form.defender_profile.id_for_label }}">{{ attack_form.defender_profile.label }}</label>
+                            {{ attack_form.defender_profile }}
+                            {{ attack_form.defender_profile.errors }}
+                        </div>
+                        <div>
+                            <label for="{{ attack_form.attack_type.id_for_label }}">{{ attack_form.attack_type.label }}</label>
+                            {{ attack_form.attack_type }}
+                            {{ attack_form.attack_type.errors }}
+                        </div>
+                        <div>
+                            <label for="{{ attack_form.hit_target_number.id_for_label }}">{{ attack_form.hit_target_number.label }}</label>
+                            {{ attack_form.hit_target_number }}
+                            {{ attack_form.hit_target_number.errors }}
+                        </div>
+                        <div>
+                            <label for="{{ attack_form.extra_hit_dice_mod.id_for_label }}">{{ attack_form.extra_hit_dice_mod.label }}</label>
+                            {{ attack_form.extra_hit_dice_mod }}
+                            {{ attack_form.extra_hit_dice_mod.errors }}
+                        </div>
+                        <div>
+                            <label for="{{ attack_form.hit_roll_mod.id_for_label }}">{{ attack_form.hit_roll_mod.label }}</label>
+                            {{ attack_form.hit_roll_mod }}
+                            {{ attack_form.hit_roll_mod.errors }}
+                        </div>
+                        <div>
+                            <label for="{{ attack_form.injury_dice_mod.id_for_label }}">{{ attack_form.injury_dice_mod.label }}</label>
+                            {{ attack_form.injury_dice_mod }}
+                            {{ attack_form.injury_dice_mod.errors }}
+                        </div>
+                        <div>
+                            <label for="{{ attack_form.injury_roll_mod.id_for_label }}">{{ attack_form.injury_roll_mod.label }}</label>
+                            {{ attack_form.injury_roll_mod }}
+                            {{ attack_form.injury_roll_mod.errors }}
+                        </div>
+                        <div>
+                            <label for="{{ attack_form.extra_target_armor.id_for_label }}">{{ attack_form.extra_target_armor.label }}</label>
+                            {{ attack_form.extra_target_armor }}
+                            {{ attack_form.extra_target_armor.errors }}
+                        </div>
+                        <div class="checkbox-row">
+                            {{ attack_form.weapon_is_critical }}<label for="{{ attack_form.weapon_is_critical.id_for_label }}">{{ attack_form.weapon_is_critical.label }}</label>
+                            {{ attack_form.weapon_is_critical.errors }}
+                        </div>
+                        <div class="actions">
+                            <button type="submit" name="run_calc" value="1">Recalculate</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="card secondary">
+                    <p class="section-title">Add a unit profile</p>
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        {% if profile_form.errors %}
+                            <div class="alert">Please fix the highlighted profile fields.</div>
+                        {% endif %}
+                        <div>
+                            <label for="{{ profile_form.name.id_for_label }}">{{ profile_form.name.label }}</label>
+                            {{ profile_form.name }}
+                            {{ profile_form.name.errors }}
+                        </div>
+                        <div>
+                            <label for="{{ profile_form.ranged_dice_mod.id_for_label }}">{{ profile_form.ranged_dice_mod.label }}</label>
+                            {{ profile_form.ranged_dice_mod }}
+                            {{ profile_form.ranged_dice_mod.errors }}
+                        </div>
+                        <div>
+                            <label for="{{ profile_form.melee_dice_mod.id_for_label }}">{{ profile_form.melee_dice_mod.label }}</label>
+                            {{ profile_form.melee_dice_mod }}
+                            {{ profile_form.melee_dice_mod.errors }}
+                        </div>
+                        <div>
+                            <label for="{{ profile_form.armor.id_for_label }}">{{ profile_form.armor.label }}</label>
+                            {{ profile_form.armor }}
+                            {{ profile_form.armor.errors }}
+                        </div>
+                        <div class="actions">
+                            <button type="submit" name="create_profile" value="1">Add profile</button>
+                        </div>
+                    </form>
+                </div>
             </div>
 
             <div class="card">
                 {% if results %}
+                    <p class="section-title">Results</p>
+                    <div class="chip-row">
+                        <div class="chip">
+                            <small>Attacker</small>
+                            <strong>{{ results.attacker.name }}</strong>
+                        </div>
+                        <div class="chip">
+                            <small>Target</small>
+                            <strong>{{ results.defender.name }}</strong>
+                        </div>
+                        <div class="chip">
+                            <small>Attack type</small>
+                            <strong>{{ results.attack_type|capfirst }}</strong>
+                        </div>
+                    </div>
+                    <div class="chip-row">
+                        <div class="chip">
+                            <small>Hit dice mod</small>
+                            <strong>{{ results.base_hit_dice_mod }} base, {{ results.extra_hit_dice_mod }} extra = {{ results.hit_dice_mod }}</strong>
+                        </div>
+                        <div class="chip">
+                            <small>Armor applied</small>
+                            <strong>{{ results.base_armor }} base, {{ results.extra_target_armor }} extra = {{ results.target_armor }}</strong>
+                        </div>
+                        <div class="chip">
+                            <small>Hit TN / roll mod</small>
+                            <strong>{{ results.hit_target_number }} TN, {{ results.hit_roll_mod }} roll mod</strong>
+                        </div>
+                        <div class="chip">
+                            <small>Injury mods</small>
+                            <strong>{{ results.injury_dice_mod }}d, {{ results.injury_roll_mod }} roll mod</strong>
+                        </div>
+                    </div>
+
                     <div class="stats-grid">
                         <div class="stat">
                             <small>Hit chance</small>
@@ -321,7 +455,7 @@
                         Injury bands use the default steps: 2-6 Flesh Wound, 7-8 Down, 9+ Out of Action.
                     </p>
                 {% else %}
-                    <p class="lead">Submit the form to see probabilities.</p>
+                    <p class="lead">Add a profile and submit the attack form to see probabilities.</p>
                 {% endif %}
             </div>
         </div>
